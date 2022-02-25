@@ -45,10 +45,10 @@ await echo`expecting checksum to be ${expectedHash}`;
 const checksumHasher = createHash("sha256");
 let actualHash;
 
-if (fs.existsSync("wd/" + target.fname)) {
+if (fs.existsSync("dl/" + target.fname)) {
     await echo`Skipping download as ${target.fname} already exists`;
 
-    const file = fs.createReadStream("wd/" + target.fname);
+    const file = fs.createReadStream("dl/" + target.fname);
     file.pipe(checksumHasher);
 
     await new Promise((yay, nay) => {
@@ -80,7 +80,7 @@ if (fs.existsSync("wd/" + target.fname)) {
 
     const fileDlStream = cloneable(fileDlPt);
 
-    const outputFile = fs.createWriteStream("wd/" + target.fname);
+    const outputFile = fs.createWriteStream("dl/" + target.fname);
     fileDlStream.clone().pipe(outputFile);
     fileDlStream.pipe(checksumHasher);
 
@@ -98,7 +98,7 @@ if (expectedHash === actualHash) {
 }
 
 const zip = new StreamZip.async({
-    file: target.fname
+    file: "wd/" + target.fname
 });
 
 const simpleBootImg = await zip.entry("boot.img");
