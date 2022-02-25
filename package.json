@@ -1,0 +1,17 @@
+{
+  "name": "bootimg-extractor",
+  "version": "1.0.0",
+  "description": "Download and extract the boot.img from MicroG Lineage for Magisk",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "zx index.mjs"
+  },
+  "author": "Alduino",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
+    "cloneable-readable": "^2.1.0",
+    "node-stream-zip": "^1.15.0",
+    "zx": "^5.1.0"
+  }
+}
