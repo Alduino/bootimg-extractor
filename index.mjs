@@ -115,11 +115,9 @@ await echo`Found payload.bin file, will extract boot.img from it`;
 
 await zip.extract(payloadBin, "wd/payload.bin");
 
-// so docker doesn't make a directory
-fs.createFileSync("boot.img");
+await $`docker run --rm -v ${path.resolve("wd")}:/data/ -it vm03/payload_dumper /data/payload.bin --out /data --images boot`;
 
-await $`docker run --rm -v ${path.resolve("wd/payload.bin")}:/data/payload.bin -v ${path.resolve("wd/boot.img")}:/data/boot.img -it vm03/payload_dumper /data/payload.bin --out /data --images boot`;
-
-fs.unlinkSync("payload.bin");
+fs.renameSync("wd/boot.img", "./boot.img");
+fs.rmSync("wd", {recursive: true, force: true});
 
 await echo`If the above command completed successfully, you should now have a boot.img file`;
