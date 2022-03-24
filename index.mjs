@@ -98,7 +98,7 @@ if (expectedHash === actualHash) {
 }
 
 const zip = new StreamZip.async({
-    file: "wd/" + target.fname
+    file: "dl/" + target.fname
 });
 
 const simpleBootImg = await zip.entry("boot.img");
