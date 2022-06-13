@@ -10,6 +10,18 @@ import StreamZip from "node-stream-zip";
 
 const DL_URL = process.env.DL_URL ?? "https://download.lineage.microg.org";
 
+async function check(message) {
+    while (true) {
+        const result = await question(`${message} (y/N) `)
+            .then(result => result.toLowerCase());
+
+        if (result === "y") return true;
+        if (!result || result === "n") return false;
+
+        await echo`Invalid response "${result}". Must be either Y or N.`;
+    }
+}
+
 fs.mkdirSync("dl", {recursive: true});
 fs.mkdirSync("wd", {recursive: true});
 
@@ -116,6 +128,19 @@ await echo`Found payload.bin file, will extract boot.img from it`;
 await zip.extract(payloadBin, "wd/payload.bin");
 
 await $`docker run --rm -v ${path.resolve("wd")}:/data/ -it vm03/payload_dumper /data/payload.bin --out /data --images boot`;
+
+if (!fs.existsSync("wd/boot.img")) {
+    await echo`Missing boot.img file. The extraction was probably unsuccessful`;
+    process.exit(1);
+}
+
+if (fs.existsSync("boot.img")) {
+    if (!await check("A boot.img file already exists. Are you sure you want to overwrite it?")) {
+        await echo`Please rename the existing boot.img file so that you can extract the new one.`;
+        fs.rmSync("wd", {recursive: true, force: true});
+        process.exit(1);
+    }
+}
 
 fs.renameSync("wd/boot.img", "./boot.img");
 fs.rmSync("wd", {recursive: true, force: true});
