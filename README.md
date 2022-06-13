@@ -3,7 +3,7 @@
 This tool downloads and extracts the latest boot.img for your device's firmware. By default, it searches the MicroG
 Lineage assets, although you can use a different server so long as its file listing is compatible with Caddy's.
 
-It can also run the scripts required for Magisk installation after an update.
+It can also run the scripts required for Magisk installation after an update (this has only been tested with a PL2 so your mileage may vary).
 
 Usage:
 
