@@ -1,5 +1,6 @@
 dl
 wd
 boot.img
+boot-patched.img
 node_modules
 *.log

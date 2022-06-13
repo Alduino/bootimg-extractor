@@ -145,4 +145,46 @@ if (fs.existsSync("boot.img")) {
 fs.renameSync("wd/boot.img", "./boot.img");
 fs.rmSync("wd", {recursive: true, force: true});
 
-await echo`If the above command completed successfully, you should now have a boot.img file`;
+await echo`Do you want to perform Magisk patching?`;
+if (await check("Please note this has only been verified to work on my PL2 device. If you have a different device, make sure that the steps are correct.")) {
+    if (!await check("If a file exists at /sdcard/Download/magisk/boot-unpatched.img, it will be overwritten. Is this OK?")) {
+        await echo`Check that no file exists at that path and try again.`;
+        process.exit(1);
+    }
+
+    await $`adb push boot.img /sdcard/Download/magisk/boot-unpatched.img`;
+    await $`adb shell am start -n com.topjohnwu.magisk/com.topjohnwu.magisk.ui.MainActivity`;
+
+    await echo`Click "install" beside "Magisk" at the top, then click "Select and Patch a File". Navigate to the magisk folder in your downloads and select "boot-unpatched.img", then click "Let's go" on the right.`;
+    await echo`(You might need to unlock your phone if it isn't already)`;
+    await question("Press enter once Magisk has finished patching the file.");
+
+    const {stdout: patchedFilesJoined} = await $`adb shell ls /sdcard/Download -t | grep magisk_patched --include "*.img" --color=never`;
+    const patchedFile = patchedFilesJoined.split("\n")[0];
+
+    if (!patchedFile) {
+        await echo`Missing patched output. Are you sure Magisk has completed?`;
+        process.exit(1);
+    }
+
+    await echo`Assuming "${patchedFile}" is the output from the magisk patching. If it isn't, press "n" when asked to reboot.`;
+
+    if (fs.existsSync("boot-patched.img")) {
+        if (!await check("A boot-patched.img file already exists. Are you sure you want to overwrite it?")) {
+            await echo`Please rename the existing boot-patched.img file so that you can extract the new one.`;
+            process.exit(1);
+        }
+    }
+
+    await $`adb pull /sdcard/Download/${patchedFile} boot-patched.img`;
+
+    await check("We need to reboot to complete the installation. Press \"y\" when you are ready to reboot, if the patched file's name was the same as Magisk logged.");
+
+    await $`adb reboot fastboot`;
+    await question("Press enter once your phone has booted into fastboot.");
+
+    await $`fastboot flash boot boot-patched.img`;
+    await $`fastboot reboot`;
+
+    await echo`Once your phone reboots, Magisk should be up and running again.`;
+}

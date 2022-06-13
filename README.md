@@ -3,9 +3,11 @@
 This tool downloads and extracts the latest boot.img for your device's firmware. By default, it searches the MicroG
 Lineage assets, although you can use a different server so long as its file listing is compatible with Caddy's.
 
+It can also run the scripts required for Magisk installation after an update.
+
 Usage:
 
-0. Make sure both Node >=14 and Docker are installed
+0. Make sure both Node >=14 and Docker are installed (and adb installed and enabled if you want to set up Magisk)
 1. Run `pnpm install`
 2. Run `pnpm start`
 
