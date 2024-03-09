@@ -45,14 +45,13 @@ await echo`Downloading checksum`;
 const expectedHash = await fetch(target.checksumUrl).then(res => res.text()).then(txt => txt.split(" ")[0]);
 await echo`(Expecting checksum to be ${expectedHash})`;
 
-const checksumHasher = createHash("sha256");
-let actualHash;
+let requiresDownload = true;
 
 if (fs.existsSync("dl/" + fileName)) {
     await echo`Skipping download as ${fileName} already exists`;
 
     const file = fs.createReadStream("dl/" + fileName);
-    file.pipe(checksumHasher);
+    const hasher = file.pipe(createHasher());
 
     await new Promise((yay, nay) => {
         function resolve() {
@@ -72,7 +71,13 @@ if (fs.existsSync("dl/" + fileName)) {
         file.on("end", resolve);
         file.on("error", reject);
     });
-} else {
+
+    if (await checkHash(hasher)) {
+        requiresDownload = false;
+    }
+}
+
+if (requiresDownload) {
     await echo`Downloading the latest version, updated ${new Date(target.updateTime).toLocaleDateString()}`;
 
     await echo`downloading file`;
@@ -85,19 +90,31 @@ if (fs.existsSync("dl/" + fileName)) {
 
     const outputFile = fs.createWriteStream("dl/" + fileName);
     fileDlStream.clone().pipe(outputFile);
-    fileDlStream.pipe(checksumHasher);
+    const hasher = fileDlStream.pipe(createHasher());
 
     fileDl.stderr.pipe(process.stdout);
 
     await fileDl;
+
+    if (!await checkHash(hasher)) {
+        process.exit(1);
+    }
 }
 
-actualHash = checksumHasher.digest("hex");
+function createHasher() {
+    return createHash("sha256");
+}
 
-if (expectedHash === actualHash) {
-    await echo`The checksum matches the expected value`;
-} else {
-    throw new Error(`The checksum does not match the expected (expected ${expectedHash}, actual ${actualHash})`);
+async function checkHash(checksumHasher) {
+    const actualHash = checksumHasher.digest("hex");
+
+    if (expectedHash === actualHash) {
+        await echo`The checksum matches the expected value`;
+        return true;
+    } else {
+        await echo`The checksum does not match the expected (expected ${expectedHash}, actual ${actualHash})`;
+        return false;
+    }
 }
 
 const firmwareFileName = await binarySource.extractFirmware?.(`dl/${fileName}`) ?? `dl/${fileName}`;
